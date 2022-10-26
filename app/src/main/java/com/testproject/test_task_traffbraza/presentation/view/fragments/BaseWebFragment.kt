@@ -87,7 +87,6 @@ abstract class BaseWebFragment : Fragment() {
         }
     }
 
-    @SuppressLint("NewApi")
     @Suppress("DEPRECATION")
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -122,18 +121,8 @@ abstract class BaseWebFragment : Fragment() {
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
-                    when {
-                        url.startsWith("mailto:") -> {
-                            startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse(url)))
-                        }
-
-                        url.startsWith("tel:") -> {
-                            startActivity(Intent(Intent.ACTION_DIAL, Uri.parse(url)))
-                        }
-
-                        else -> view?.loadUrl(url)
-                    }
-
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    startActivity(intent)
                     return true
                 }
             }
@@ -179,7 +168,7 @@ abstract class BaseWebFragment : Fragment() {
                         }
 
                         setJSSettings()
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && secondaryWebView != null)
                             CookieManager.getInstance()
                                 .setAcceptThirdPartyCookies(secondaryWebView, true)
                         else
@@ -203,8 +192,8 @@ abstract class BaseWebFragment : Fragment() {
         }
     }
 
-    fun onBackPressed(): Boolean {
-        return when {
+    fun onBackPressed() {
+        when {
             secondaryWebView?.visibility == View.VISIBLE -> {
                 if (secondaryWebView?.canGoBack() == true)
                     secondaryWebView?.goBack()
@@ -213,21 +202,16 @@ abstract class BaseWebFragment : Fragment() {
                     container.removeView(secondaryWebView)
                     webView.visibility = View.VISIBLE
                 }
-                true
             }
             webView.canGoBack() -> {
                 val list = webView.copyBackForwardList()
 
                 if (list.currentIndex == 1) {
-                    false
                 } else {
                     webView.goBack()
-                    true
                 }
             }
-            else -> {
-                false
-            }
+
         }
 
     }
@@ -241,11 +225,12 @@ abstract class BaseWebFragment : Fragment() {
             setSupportMultipleWindows(true)
             useWideViewPort = true
 
-            loadWithOverviewMode = true
-
             userAgentString = userAgentString.replaceAfter(")", "")
         }
+
+        requestFocus(View.FOCUS_DOWN)
     }
+
 
     fun activityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (requestCode == RC_FILE_CHOOSER) {
@@ -259,6 +244,7 @@ abstract class BaseWebFragment : Fragment() {
                 valueCallback.onReceiveValue(arrayOf(final))
         }
     }
+
 
     @Suppress("DEPRECATION")
     private fun startFileChooser() {
@@ -277,7 +263,6 @@ abstract class BaseWebFragment : Fragment() {
     companion object {
         private const val RC_FILE_CHOOSER = 333
     }
-
 }
 
 val Int.px: Int
